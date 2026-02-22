@@ -21,7 +21,7 @@ import (
 func BeginAuthnLogin(c *gin.Context) {
 	enabled := setting.GetBool(conf.WebauthnLoginEnabled)
 	if !enabled {
-		common.ErrorStrResp(c, "WebAuthn is not enabled", 403)
+		common.ErrorStrResp(c, "Passkey is not enabled", 403)
 		return
 	}
 	authnInstance, err := authn.NewAuthnInstance(c)
@@ -62,7 +62,7 @@ func BeginAuthnLogin(c *gin.Context) {
 func FinishAuthnLogin(c *gin.Context) {
 	enabled := setting.GetBool(conf.WebauthnLoginEnabled)
 	if !enabled {
-		common.ErrorStrResp(c, "WebAuthn is not enabled", 403)
+		common.ErrorStrResp(c, "Passkey is not enabled", 403)
 		return
 	}
 	authnInstance, err := authn.NewAuthnInstance(c)
@@ -122,7 +122,7 @@ func FinishAuthnLogin(c *gin.Context) {
 func BeginAuthnRegistration(c *gin.Context) {
 	enabled := setting.GetBool(conf.WebauthnLoginEnabled)
 	if !enabled {
-		common.ErrorStrResp(c, "WebAuthn is not enabled", 403)
+		common.ErrorStrResp(c, "Passkey is not enabled", 403)
 		return
 	}
 	user := c.Request.Context().Value(conf.UserKey).(*model.User)
@@ -132,7 +132,10 @@ func BeginAuthnRegistration(c *gin.Context) {
 		common.ErrorResp(c, err, 400)
 	}
 
-	options, sessionData, err := authnInstance.BeginRegistration(user)
+	options, sessionData, err := authnInstance.BeginRegistration(
+		user,
+		webauthn.WithResidentKeyRequirement(protocol.ResidentKeyRequirementRequired),
+	)
 
 	if err != nil {
 		common.ErrorResp(c, err, 400)
@@ -152,7 +155,7 @@ func BeginAuthnRegistration(c *gin.Context) {
 func FinishAuthnRegistration(c *gin.Context) {
 	enabled := setting.GetBool(conf.WebauthnLoginEnabled)
 	if !enabled {
-		common.ErrorStrResp(c, "WebAuthn is not enabled", 403)
+		common.ErrorStrResp(c, "Passkey is not enabled", 403)
 		return
 	}
 	user := c.Request.Context().Value(conf.UserKey).(*model.User)
@@ -220,15 +223,15 @@ func DeleteAuthnLogin(c *gin.Context) {
 }
 
 func GetAuthnCredentials(c *gin.Context) {
-	type WebAuthnCredentials struct {
+	type PasskeyCredentials struct {
 		ID          []byte `json:"id"`
 		FingerPrint string `json:"fingerprint"`
 	}
 	user := c.Request.Context().Value(conf.UserKey).(*model.User)
 	credentials := user.WebAuthnCredentials()
-	res := make([]WebAuthnCredentials, 0, len(credentials))
+	res := make([]PasskeyCredentials, 0, len(credentials))
 	for _, v := range credentials {
-		credential := WebAuthnCredentials{
+		credential := PasskeyCredentials{
 			ID:          v.ID,
 			FingerPrint: fmt.Sprintf("% X", v.Authenticator.AAGUID),
 		}
