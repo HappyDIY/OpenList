@@ -89,6 +89,7 @@ func Init(e *gin.Engine) {
 
 	// passkey
 	api.GET("/authn/passkey_begin_login", handles.BeginAuthnLogin)
+	api.GET("/authn/passkey_legacy_status", handles.LegacyAuthnStatus)
 	api.POST("/authn/passkey_finish_login", handles.FinishAuthnLogin)
 	authn.GET("/passkey_begin_registration", handles.BeginAuthnRegistration)
 	authn.POST("/passkey_finish_registration", handles.FinishAuthnRegistration)
